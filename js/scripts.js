@@ -1,18 +1,21 @@
-function getIncomeAndExpenses() {
-    const months = [
-        'january', 'february', 'march', 'april', 'may', 
-        'june', 'july', 'august', 'september', 
-        'october', 'november', 'december'
-    ];
+const MONTHS = [
+    'january', 'february', 'march', 'april', 'may',
+    'june', 'july', 'august', 'september',
+    'october', 'november', 'december'
+];
 
-    const data = months.map(month => {
+function getIncomeAndExpenses() {
+    const data = MONTHS.map(month => {
         const income = document.getElementById(`${month}-income`)?.value || 0;
         const expenses = document.getElementById(`${month}-expenses`)?.value || 0;
+        const incomeNum = parseFloat(income);
+        const expensesNum = parseFloat(expenses);
 
         return {
             month: month.charAt(0).toUpperCase() + month.slice(1),
-            income: parseFloat(income),
-            expenses: parseFloat(expenses)
+            income: incomeNum,
+            expenses: expensesNum,
+            net: incomeNum - expensesNum
         };
     });
 
@@ -48,6 +51,13 @@ document.addEventListener("DOMContentLoaded", function () {
                 backgroundColor: 'rgba(255, 99, 132, 0.2)',
                 borderColor: 'rgba(255, 99, 132, 1)',
                 borderWidth: 1
+            }, {
+                label: 'Net Savings',
+                data: [],
+                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                borderColor: 'rgba(54, 162, 235, 1)',
+                type: 'line', // Display as a line chart on top of the bars
+                borderWidth: 2
             }]
         },
         options: {
@@ -73,17 +83,42 @@ document.addEventListener("DOMContentLoaded", function () {
         const data = getIncomeAndExpenses();
         barChart.data.datasets[0].data = data.map(item => item.income);
         barChart.data.datasets[1].data = data.map(item => item.expenses);
+        barChart.data.datasets[2].data = data.map(item => item.net);
         barChart.update();
     }
 
-    function populateRandomData() {
-        const months = [
-            'january', 'february', 'march', 'april', 'may', 
-            'june', 'july', 'august', 'september', 
-            'october', 'november', 'december'
-        ];
+    function populateDataInputs() {
+        const dataInputsContainer = document.getElementById('data-inputs');
+        if (!dataInputsContainer) return;
+    
+        let html = '';
+        MONTHS.forEach(month => {
+            const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
+            html += `
+                <div class="col-12 col-md-6">
+                    <h4>${capitalizedMonth}</h4>
+                    <div class="row mb-3">
+                        <div class="col-6">
+                            <div class="input-group">
+                                <label class="input-group-text" for="${month}-income">Income</label>
+                                <input type="number" class="form-control financial-input" id="${month}-income" placeholder="Enter income" min="0" step="any">
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="input-group">
+                                <label class="input-group-text" for="${month}-expenses">Expenses</label>
+                                <input type="number" class="form-control financial-input" id="${month}-expenses" placeholder="Enter expenses" min="0" step="any">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        });
+        dataInputsContainer.innerHTML = html;
+    }
 
-        months.forEach(month => {
+    function populateRandomData() {
+        MONTHS.forEach(month => {
             const randomIncome = Math.floor(Math.random() * (10000 - 500 + 1)) + 500;
             const randomExpenses = Math.floor(Math.random() * (10000 - 500 + 1)) + 500;
 
@@ -92,7 +127,25 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    function addInputValidation() {
+        const financialInputs = document.querySelectorAll('.financial-input');
+        financialInputs.forEach(input => {
+            input.addEventListener('input', (event) => {
+                // Use browser's built-in validity check for type="number"
+                if (event.target.validity.valid) {
+                    event.target.classList.remove('is-invalid');
+                } else {
+                    event.target.classList.add('is-invalid');
+                }
+            });
+        });
+    }
+
+    populateDataInputs();
+    addInputValidation();
     populateRandomData();
+    // Bug fix: Update the chart with initial random data on page load
+    updateChart();
 
     const chartTab = document.getElementById('chart-tab');
     chartTab.addEventListener('click', updateChart);
@@ -106,4 +159,7 @@ document.addEventListener("DOMContentLoaded", function () {
     });
 });
 
-module.exports = { getIncomeAndExpenses };
+// Make the script safe for both browser and Node.js environments (for testing)
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { getIncomeAndExpenses };
+}
