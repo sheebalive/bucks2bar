@@ -96,15 +96,15 @@ document.addEventListener("DOMContentLoaded", function () {
             const capitalizedMonth = month.charAt(0).toUpperCase() + month.slice(1);
             html += `
                 <div class="col-12 col-md-6">
-                    <h4>${capitalizedMonth}</h4>
+                    <h4 class="p-2 rounded-2" data-month="${month}">${capitalizedMonth}</h4>
                     <div class="row mb-3">
-                        <div class="col-6">
+                        <div class="col-12 col-md-6 mb-2 mb-md-0">
                             <div class="input-group">
                                 <label class="input-group-text" for="${month}-income">Income</label>
                                 <input type="number" class="form-control financial-input" id="${month}-income" placeholder="Enter income" min="0" step="any">
                             </div>
                         </div>
-                        <div class="col-6">
+                        <div class="col-12 col-md-6">
                             <div class="input-group">
                                 <label class="input-group-text" for="${month}-expenses">Expenses</label>
                                 <input type="number" class="form-control financial-input" id="${month}-expenses" placeholder="Enter expenses" min="0" step="any">
@@ -127,6 +127,32 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    function updateDataTabColors() {
+        const data = getIncomeAndExpenses();
+        data.forEach(item => {
+            const month = item.month.toLowerCase();
+            const monthHeader = document.querySelector(`#data-inputs h4[data-month="${month}"]`);
+
+            if (monthHeader) {
+                // Reset classes to avoid conflicts
+                monthHeader.classList.remove(
+                    'bg-success-subtle', 'text-success-emphasis',
+                    'bg-danger-subtle', 'text-danger-emphasis',
+                    'bg-secondary-subtle'
+                );
+
+                // Apply new classes based on net income
+                if (item.net > 0) {
+                    monthHeader.classList.add('bg-success-subtle', 'text-success-emphasis');
+                } else if (item.net < 0) {
+                    monthHeader.classList.add('bg-danger-subtle', 'text-danger-emphasis');
+                } else {
+                    monthHeader.classList.add('bg-secondary-subtle');
+                }
+            }
+        });
+    }
+
     function addInputValidation() {
         const financialInputs = document.querySelectorAll('.financial-input');
         financialInputs.forEach(input => {
@@ -134,6 +160,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 // Use browser's built-in validity check for type="number"
                 if (event.target.validity.valid) {
                     event.target.classList.remove('is-invalid');
+                    updateChart();
+                    updateDataTabColors();
                 } else {
                     event.target.classList.add('is-invalid');
                 }
@@ -144,8 +172,8 @@ document.addEventListener("DOMContentLoaded", function () {
     populateDataInputs();
     addInputValidation();
     populateRandomData();
-    // Bug fix: Update the chart with initial random data on page load
     updateChart();
+    updateDataTabColors();
 
     const chartTab = document.getElementById('chart-tab');
     chartTab.addEventListener('click', updateChart);
